@@ -1,0 +1,125 @@
+{
+  "schema_version": 4,
+  "name": "Phishing Triage",
+  "description": "Automated phishing email triage: enrich → check allowlist → verdict → case creation",
+  "keep_events_for": 604800,
+  "send_to_story_enabled": true,
+  "entry_agent_guid": "recv-phishing-webhook",
+  "agents": [
+    {
+      "guid": "recv-phishing-webhook",
+      "name": "Receive Phishing Verdict",
+      "type": "Agents::WebhookAgent",
+      "description": "Receives phishing verdict documents from the phishing pipeline",
+      "options": {
+        "secret": "{% credential tines_webhook_secret %}",
+        "verbs": "post",
+        "path": "phishing"
+      }
+    },
+    {
+      "guid": "check-allowlist",
+      "name": "Check IP Allowlist",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Check if the sending IP is in the allowlist",
+      "options": {
+        "url": "{% credential tines_allowlist_url %}/allowlist/check/{{ receive_phishing_verdict.body.sending_ips | first }}",
+        "method": "get",
+        "content_type": "application/json"
+      }
+    },
+    {
+      "guid": "vt-ip-enrichment",
+      "name": "VirusTotal IP Enrichment",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Look up the source IP in VirusTotal",
+      "options": {
+        "url": "https://www.virustotal.com/api/v3/ip_addresses/{{ receive_phishing_verdict.body.sending_ips | first }}",
+        "method": "get",
+        "headers": {
+          "x-apikey": "{% credential vt_api_key %}"
+        }
+      }
+    },
+    {
+      "guid": "evaluate-verdict",
+      "name": "Evaluate Phishing Verdict",
+      "type": "Agents::TriggerAgent",
+      "description": "Route based on phishing verdict",
+      "options": {
+        "rules": [
+          {
+            "type": "regex",
+            "value": "malicious|suspicious",
+            "path": "{{ receive_phishing_verdict.body.verdict }}"
+          }
+        ]
+      }
+    },
+    {
+      "guid": "check-allowlisted",
+      "name": "Check If Allowlisted",
+      "type": "Agents::TriggerAgent",
+      "description": "Stop processing if IP is allowlisted",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "false",
+            "path": "{{ check_allowlist.body.allowed }}"
+          }
+        ]
+      }
+    },
+    {
+      "guid": "create-soar-case",
+      "name": "Create SOAR Case",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Index a case document into soar-cases Elasticsearch index",
+      "options": {
+        "url": "{% credential elastic_host %}/soar-cases/_doc",
+        "method": "post",
+        "content_type": "application/json",
+        "basic_auth": "{% credential elastic_user %}:{% credential elastic_password %}",
+        "payload": {
+          "case_id": "{{ receive_phishing_verdict.body.pipeline_run_id }}",
+          "alert_id": "{{ receive_phishing_verdict.body.message_id }}",
+          "rule_name": "Phishing Detection",
+          "source_ip": "{{ receive_phishing_verdict.body.sending_ips | first }}",
+          "host_name": "{{ receive_phishing_verdict.body.sender_domain }}",
+          "severity": "high",
+          "timestamp": "{{ receive_phishing_verdict.body.timestamp }}",
+          "phishing_verdict": "{{ receive_phishing_verdict.body.verdict }}",
+          "phishing_score": "{{ receive_phishing_verdict.body.score }}",
+          "case_status": "new",
+          "allowlisted": false,
+          "created_at": "{% now 'iso8601' %}"
+        }
+      }
+    },
+    {
+      "guid": "send-to-alert-response",
+      "name": "Trigger Alert Response Story",
+      "type": "Agents::SendToStoryAgent",
+      "description": "Hand off to alert_response story for remediation",
+      "options": {
+        "story": "{% story alert_response %}",
+        "payload": {
+          "case_id": "{{ receive_phishing_verdict.body.pipeline_run_id }}",
+          "verdict": "{{ receive_phishing_verdict.body.verdict }}",
+          "source_ip": "{{ receive_phishing_verdict.body.sending_ips | first }}",
+          "host_name": "{{ receive_phishing_verdict.body.sender_domain }}",
+          "severity": "high"
+        }
+      }
+    }
+  ],
+  "connections": [
+    { "source": "recv-phishing-webhook", "target": "check-allowlist" },
+    { "source": "check-allowlist", "target": "check-allowlisted" },
+    { "source": "check-allowlisted", "target": "vt-ip-enrichment" },
+    { "source": "vt-ip-enrichment", "target": "evaluate-verdict" },
+    { "source": "evaluate-verdict", "target": "create-soar-case" },
+    { "source": "create-soar-case", "target": "send-to-alert-response" }
+  ]
+}
