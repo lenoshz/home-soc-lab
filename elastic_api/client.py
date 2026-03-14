@@ -82,14 +82,14 @@ class ElasticClient:
 
     def search(self, index: str, query: dict) -> list:
         """Search Elasticsearch and return list of hits."""
-        response = self._es.search(index=index, body=query)
+        response = self._es.search(index=index, **query)
         return response["hits"]["hits"]
 
     def create_index(self, index: str, mapping: dict = None) -> dict:
         """Create an index if it doesn't already exist."""
-        body = mapping or {}
+        kwargs = mapping or {}
         try:
-            response = self._es.indices.create(index=index, body=body)
+            response = self._es.indices.create(index=index, **kwargs)
             return dict(response)
         except Exception as exc:
             # Ignore index already exists (400 resource_already_exists_exception)

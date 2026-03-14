@@ -1,4 +1,5 @@
 """Tests for elastic_api.client."""
+import json
 import pytest
 import responses as resp_lib
 from unittest.mock import MagicMock, patch
@@ -85,7 +86,6 @@ class TestIsolateHost:
         result = client.isolate_host("host-1")
         assert result["status"] == "ok"
         assert len(resp_lib.calls) == 1
-        import json
         body = json.loads(resp_lib.calls[0].request.body)
         assert body["endpoint_ids"] == ["host-1"]
 
@@ -152,6 +152,7 @@ class TestCreateIndex:
     def test_create_new_index(self, client, mock_es):
         mock_es.indices.create.return_value = {"acknowledged": True, "index": "new-index"}
         result = client.create_index("new-index", {"mappings": {}})
+        mock_es.indices.create.assert_called_once_with(index="new-index", mappings={})
         assert result["acknowledged"] is True
 
     def test_create_index_already_exists(self, client, mock_es):

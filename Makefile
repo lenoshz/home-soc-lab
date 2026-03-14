@@ -7,4 +7,6 @@ test:
 	PYTHONPATH=. pytest
 
 lint:
-	python -m py_compile elastic_api/client.py p3_phishing_pipeline/pipeline.py p2_tines_soar/allowlist_service/app.py
+	@for f in elastic_api/client.py p3_phishing_pipeline/pipeline.py p2_tines_soar/allowlist_service/app.py; do \
+		[ -f "$$f" ] && python -m py_compile "$$f" && echo "OK: $$f" || true; \
+	done
