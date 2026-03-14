@@ -1,0 +1,20 @@
+[rule]
+id = "rule-009-c2"
+name = "C2 Beaconing Detected"
+description = "Detects periodic outbound connections consistent with C2 beaconing"
+risk_score = 75
+severity = "high"
+type = "query"
+language = "kuery"
+query = "event.category:network AND event.type:connection AND destination.ip:* AND NOT destination.ip:(10.0.0.0/8 OR 192.168.0.0/16 OR 172.16.0.0/12 OR 127.0.0.1)"
+tags = ["c2", "command-and-control", "T1071"]
+enabled = true
+from = "now-5m"
+interval = "1m"
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+[[rule.threat.technique]]
+id = "T1071"
+name = "Application Layer Protocol"
+reference = "https://attack.mitre.org/techniques/T1071/"

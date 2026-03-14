@@ -1,0 +1,20 @@
+[rule]
+id = "rule-008-defense-evasion"
+name = "Security Tool Tampering"
+description = "Detects attempts to disable or tamper with security tools"
+risk_score = 82
+severity = "high"
+type = "query"
+language = "kuery"
+query = "event.category:process AND event.type:start AND process.args:(\"sc stop\" OR \"net stop\" OR \"taskkill\") AND process.args:(defender OR antivirus OR sysmon OR elastic)"
+tags = ["defense-evasion", "T1562"]
+enabled = true
+from = "now-5m"
+interval = "1m"
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+[[rule.threat.technique]]
+id = "T1562"
+name = "Impair Defenses"
+reference = "https://attack.mitre.org/techniques/T1562/"

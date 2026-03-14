@@ -1,0 +1,25 @@
+From: "Newsletter" <newsletter@legitimate.com>
+To: subscriber@example.com
+Subject: Your monthly newsletter
+Date: Mon, 01 Jan 2024 09:00:00 +0000
+Message-ID: <newsletter.jan2024@legitimate.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Received: from mail.legitimate.com (198.51.100.5)
+        by mx.example.com; Mon, 01 Jan 2024 09:00:00 +0000
+Authentication-Results: mx.example.com;
+    dkim=pass header.i=@legitimate.com;
+    spf=pass smtp.mailfrom=legitimate.com;
+    dmarc=pass
+
+Hello,
+
+Welcome to your monthly newsletter. Here are this month's articles:
+
+- Article 1: https://legitimate.com/article1
+- Article 2: https://legitimate.com/article2
+
+Unsubscribe: https://legitimate.com/unsubscribe
+
+Best regards,
+The Newsletter Team

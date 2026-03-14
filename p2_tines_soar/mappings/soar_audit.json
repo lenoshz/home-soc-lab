@@ -1,0 +1,14 @@
+{
+  "mappings": {
+    "properties": {
+      "event_id": { "type": "keyword" },
+      "case_id": { "type": "keyword" },
+      "action": { "type": "keyword" },
+      "actor": { "type": "keyword" },
+      "timestamp": { "type": "date" },
+      "details": { "type": "text" },
+      "source_system": { "type": "keyword" },
+      "result": { "type": "keyword" }
+    }
+  }
+}

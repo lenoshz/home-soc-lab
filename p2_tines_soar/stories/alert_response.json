@@ -1,0 +1,115 @@
+{
+  "schema_version": 4,
+  "name": "Alert Response",
+  "description": "Automated alert response: host isolation → audit logging → notification → case update",
+  "keep_events_for": 604800,
+  "send_to_story_enabled": true,
+  "entry_agent_guid": "recv-alert-trigger",
+  "agents": [
+    {
+      "guid": "recv-alert-trigger",
+      "name": "Receive Alert",
+      "type": "Agents::WebhookAgent",
+      "description": "Receives alert data from phishing_triage story or Kibana connector",
+      "options": {
+        "secret": "{% credential tines_webhook_secret %}",
+        "verbs": "post",
+        "path": "alert"
+      }
+    },
+    {
+      "guid": "check-allowlist-alert",
+      "name": "Check Alert IP Allowlist",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Re-check allowlist before taking action",
+      "options": {
+        "url": "{% credential tines_allowlist_url %}/allowlist/check/{{ receive_alert.body.source_ip }}",
+        "method": "get",
+        "content_type": "application/json"
+      }
+    },
+    {
+      "guid": "gate-not-allowlisted",
+      "name": "Gate: Not Allowlisted",
+      "type": "Agents::TriggerAgent",
+      "description": "Only proceed if IP is not allowlisted",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "false",
+            "path": "{{ check_allowlist_alert.body.allowed }}"
+          }
+        ]
+      }
+    },
+    {
+      "guid": "isolate-host",
+      "name": "Isolate Host via Kibana",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Isolate the affected host via Kibana Endpoint API",
+      "options": {
+        "url": "{% credential kibana_host %}/api/endpoint/action/isolate",
+        "method": "post",
+        "content_type": "application/json",
+        "headers": {
+          "kbn-xsrf": "true"
+        },
+        "basic_auth": "{% credential elastic_user %}:{% credential elastic_password %}",
+        "payload": {
+          "endpoint_ids": ["{{ receive_alert.body.host_name }}"]
+        }
+      }
+    },
+    {
+      "guid": "create-audit-log",
+      "name": "Create Audit Log Entry",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Write audit log to soar-audit Elasticsearch index",
+      "options": {
+        "url": "{% credential elastic_host %}/soar-audit/_doc",
+        "method": "post",
+        "content_type": "application/json",
+        "basic_auth": "{% credential elastic_user %}:{% credential elastic_password %}",
+        "payload": {
+          "event_id": "{% uuid %}",
+          "case_id": "{{ receive_alert.body.case_id }}",
+          "action": "host_isolated",
+          "actor": "tines_automation",
+          "timestamp": "{% now 'iso8601' %}",
+          "details": "Host {{ receive_alert.body.host_name }} isolated due to {{ receive_alert.body.verdict }} verdict",
+          "source_system": "tines",
+          "result": "success"
+        }
+      }
+    },
+    {
+      "guid": "update-case-status",
+      "name": "Update Case Status",
+      "type": "Agents::HTTPRequestAgent",
+      "description": "Update the SOAR case status to in_progress",
+      "options": {
+        "url": "{% credential elastic_host %}/soar-cases/_update_by_query",
+        "method": "post",
+        "content_type": "application/json",
+        "basic_auth": "{% credential elastic_user %}:{% credential elastic_password %}",
+        "payload": {
+          "query": {
+            "term": { "case_id": "{{ receive_alert.body.case_id }}" }
+          },
+          "script": {
+            "source": "ctx._source.case_status = 'in_progress'; ctx._source.updated_at = params.ts",
+            "params": { "ts": "{% now 'iso8601' %}" }
+          }
+        }
+      }
+    }
+  ],
+  "connections": [
+    { "source": "recv-alert-trigger", "target": "check-allowlist-alert" },
+    { "source": "check-allowlist-alert", "target": "gate-not-allowlisted" },
+    { "source": "gate-not-allowlisted", "target": "isolate-host" },
+    { "source": "isolate-host", "target": "create-audit-log" },
+    { "source": "create-audit-log", "target": "update-case-status" }
+  ]
+}

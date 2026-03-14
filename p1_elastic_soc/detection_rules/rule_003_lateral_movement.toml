@@ -1,0 +1,20 @@
+[rule]
+id = "rule-003-lateral-movement"
+name = "Lateral Movement via SMB/WMI"
+description = "Detects lateral movement activity via SMB or WMI remote execution"
+risk_score = 79
+severity = "high"
+type = "query"
+language = "kuery"
+query = "event.category:network AND destination.port:(445 OR 135) AND event.action:connection_attempted AND source.ip:* AND NOT source.ip:127.0.0.1"
+tags = ["lateral-movement", "T1021"]
+enabled = true
+from = "now-5m"
+interval = "1m"
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+[[rule.threat.technique]]
+id = "T1021"
+name = "Remote Services"
+reference = "https://attack.mitre.org/techniques/T1021/"

@@ -1,0 +1,24 @@
+{
+  "mappings": {
+    "properties": {
+      "case_id": { "type": "keyword" },
+      "alert_id": { "type": "keyword" },
+      "rule_name": { "type": "keyword" },
+      "source_ip": { "type": "ip" },
+      "host_name": { "type": "keyword" },
+      "severity": { "type": "keyword" },
+      "timestamp": { "type": "date" },
+      "kibana_alert_url": { "type": "keyword" },
+      "tines_story": { "type": "keyword" },
+      "tines_run_id": { "type": "keyword" },
+      "case_status": { "type": "keyword" },
+      "resolution_reason": { "type": "text" },
+      "assignee": { "type": "keyword" },
+      "created_at": { "type": "date" },
+      "updated_at": { "type": "date" },
+      "phishing_verdict": { "type": "keyword" },
+      "phishing_score": { "type": "float" },
+      "allowlisted": { "type": "boolean" }
+    }
+  }
+}

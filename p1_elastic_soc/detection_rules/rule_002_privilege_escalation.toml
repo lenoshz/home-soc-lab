@@ -1,0 +1,20 @@
+[rule]
+id = "rule-002-privilege-escalation"
+name = "Privilege Escalation Detected"
+description = "Detects privilege escalation via sudo abuse or token manipulation"
+risk_score = 85
+severity = "critical"
+type = "query"
+language = "kuery"
+query = "event.category:process AND process.name:(sudo OR su OR runas) AND event.outcome:success AND NOT user.name:root"
+tags = ["privilege-escalation", "T1548"]
+enabled = true
+from = "now-5m"
+interval = "1m"
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+[[rule.threat.technique]]
+id = "T1548"
+name = "Abuse Elevation Control Mechanism"
+reference = "https://attack.mitre.org/techniques/T1548/"
