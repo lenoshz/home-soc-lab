@@ -1,0 +1,20 @@
+[rule]
+id = "rule-006-persistence"
+name = "Registry Run Key Persistence"
+description = "Detects persistence via Windows Registry Run keys modification"
+risk_score = 68
+severity = "medium"
+type = "query"
+language = "kuery"
+query = "event.category:registry AND registry.path:*\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run* AND event.type:change"
+tags = ["persistence", "registry", "T1547"]
+enabled = true
+from = "now-5m"
+interval = "1m"
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+[[rule.threat.technique]]
+id = "T1547"
+name = "Boot or Logon Autostart Execution"
+reference = "https://attack.mitre.org/techniques/T1547/"

@@ -1,0 +1,20 @@
+[rule]
+id = "rule-004-data-exfiltration"
+name = "Data Exfiltration via DNS Tunneling"
+description = "Detects abnormally large DNS queries indicative of DNS tunneling/exfiltration"
+risk_score = 70
+severity = "high"
+type = "query"
+language = "kuery"
+query = "event.category:network AND network.protocol:dns AND dns.question.name:* AND event.dataset:zeek.dns"
+tags = ["exfiltration", "dns-tunneling", "T1048"]
+enabled = true
+from = "now-5m"
+interval = "1m"
+
+[[rule.threat]]
+framework = "MITRE ATT&CK"
+[[rule.threat.technique]]
+id = "T1048"
+name = "Exfiltration Over Alternative Protocol"
+reference = "https://attack.mitre.org/techniques/T1048/"
