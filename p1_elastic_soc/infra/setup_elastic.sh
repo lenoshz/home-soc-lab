@@ -23,6 +23,8 @@ else
     # Stop existing container if present
     docker rm -f "${ES_CONTAINER_NAME}" 2>/dev/null || true
 
+    # NOTE: TLS is disabled (xpack.security.http.ssl.enabled=false) for local dev convenience.
+    # Do NOT use this configuration in production environments.
     docker run -d \
         --name "${ES_CONTAINER_NAME}" \
         -p "${ES_PORT}:9200" \

@@ -68,6 +68,7 @@ def analyse_headers(parsed_email: Dict[str, Any]) -> Dict[str, Any]:
         score += 0.15
 
     # Check missing message ID
+    # Note: '00000000'-prefixed IDs are auto-generated placeholders (UUID format without a real source)
     no_message_id = not message_id or message_id.startswith("00000000")
     if no_message_id:
         flags.append("no_message_id")

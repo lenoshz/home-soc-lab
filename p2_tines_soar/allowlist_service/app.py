@@ -1,5 +1,6 @@
 """Allowlist service for Tines SOAR - manages IP/domain allowlist."""
 import datetime
+from typing import Optional
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -8,7 +9,7 @@ app = Flask(__name__)
 _ALLOWLIST: list = []
 
 
-def _find_entry(entry_value: str) -> dict | None:
+def _find_entry(entry_value: str) -> Optional[dict]:
     """Find entry by value (case-insensitive for domains)."""
     for item in _ALLOWLIST:
         if item["entry"].lower() == entry_value.lower():

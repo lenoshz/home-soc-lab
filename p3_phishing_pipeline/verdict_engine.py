@@ -1,4 +1,5 @@
 """Verdict engine: combines header analysis and enrichment results into a final verdict."""
+import re
 from typing import Dict, Any, List, Optional
 
 
@@ -9,6 +10,25 @@ VERDICT_CLEAN = "clean"
 
 MALICIOUS_THRESHOLD = 0.7
 SUSPICIOUS_THRESHOLD = 0.4
+
+# Authority (scheme + host) pattern for URL defanging
+_URL_AUTHORITY_RE = re.compile(r'^(https?)://(([^/?#:]+)(?::\d+)?)(/.*)?$', re.IGNORECASE)
+
+
+def _defang_url(url: str) -> str:
+    """
+    Defang a URL for safe storage/display.
+    Only replaces the scheme and dots in the hostname; paths/query strings are left intact.
+    Example: https://evil.com/path?v=1.0 → hxxps://evil[.]com/path?v=1.0
+    """
+    m = _URL_AUTHORITY_RE.match(url)
+    if not m:
+        # Fall back to simple scheme replacement only
+        return url.replace("http://", "hxxp://").replace("https://", "hxxps://")
+    scheme, authority, host, rest = m.group(1), m.group(2), m.group(3), m.group(4) or ""
+    defanged_scheme = scheme.replace("http", "hxxp")
+    defanged_authority = authority.replace(host, host.replace(".", "[.]"))
+    return f"{defanged_scheme}://{defanged_authority}{rest}"
 
 
 def score_enrichment(
@@ -123,10 +143,10 @@ def build_verdict_document(
         header_flags=header_analysis.get("flags", []),
     )
 
-    # Defang URLs for safe storage
+    # Defang URLs for safe storage: replace scheme and dots in the hostname only
     urls_defanged = []
     for url in parsed_email.get("urls", []):
-        defanged = url.replace("http://", "hxxp://").replace("https://", "hxxps://").replace(".", "[.]")
+        defanged = _defang_url(url)
         urls_defanged.append({"original": url, "defanged": defanged})
 
     return {

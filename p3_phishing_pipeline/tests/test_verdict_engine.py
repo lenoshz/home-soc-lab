@@ -131,6 +131,9 @@ class TestBuildVerdictDocument:
         url_obj = doc["urls"][0]
         assert "defanged" in url_obj
         assert "hxxp" in url_obj["defanged"]
+        # Path should be preserved, only hostname dots are replaced
+        assert "evil[.]com" in url_obj["defanged"]
+        assert "/phish" in url_obj["defanged"]
 
     def test_pipeline_run_id_stored(self, sample_parsed_email, sample_header_analysis, sample_enrichment):
         doc = build_verdict_document(

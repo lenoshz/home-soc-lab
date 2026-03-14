@@ -16,6 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def generate_exfiltration_events(source_host: str, destination_ip: str = "198.51.100.1") -> list:
     """Generate DNS tunneling and large transfer exfiltration events."""
     events = []
+    # Use timezone-aware UTC datetime then strip tzinfo so isoformat() produces a
+    # clean 'YYYY-MM-DDTHH:MM:SS' string; the 'Z' suffix is appended explicitly below.
     base_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
     # DNS tunneling events

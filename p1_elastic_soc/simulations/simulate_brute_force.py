@@ -16,6 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def generate_brute_force_events(target_host: str, source_ip: str, count: int = 20) -> list:
     """Generate brute force authentication failure events."""
     events = []
+    # Use timezone-aware UTC datetime then strip tzinfo so isoformat() produces a
+    # clean 'YYYY-MM-DDTHH:MM:SS' string; the 'Z' suffix is appended explicitly below.
     base_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
     usernames = ["admin", "administrator", "root", "user", "test", "guest"]

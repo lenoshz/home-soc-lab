@@ -16,6 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def generate_lateral_movement_events(source_host: str, target_hosts: list, source_ip: str = "10.0.0.50") -> list:
     """Generate lateral movement network events."""
     events = []
+    # Use timezone-aware UTC datetime then strip tzinfo so isoformat() produces a
+    # clean 'YYYY-MM-DDTHH:MM:SS' string; the 'Z' suffix is appended explicitly below.
     base_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
     for i, target_host in enumerate(target_hosts):
