@@ -32,6 +32,7 @@ jobs:
           echo "Target commit $TARGET verified."
 
       - name: Force-reset main to 2635ebf (force-with-lease)
+        id: reset
         run: |
           TARGET="2635ebf08ad48b96a6ccebe9803c5a22c0f203fa"
           EXPECTED_CURRENT="7465752196b3931d260e2b9e684c551ded57f866"
@@ -39,6 +40,7 @@ jobs:
 
           if [ "$ACTUAL_CURRENT" = "$TARGET" ]; then
             echo "main is already at the target commit $TARGET. Nothing to do."
+            echo "did_reset=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -54,8 +56,11 @@ jobs:
           git push --force-with-lease=refs/heads/main:"$ACTUAL_CURRENT" \
             origin "$TARGET:refs/heads/main"
           echo "Done. main now points to $TARGET."
+          echo "did_reset=true" >> "$GITHUB_OUTPUT"
 
       - name: Remove this workflow file from the PR branch
+        if: steps.reset.outputs.did_reset == 'true'
+        continue-on-error: true
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name  "github-actions[bot]"
