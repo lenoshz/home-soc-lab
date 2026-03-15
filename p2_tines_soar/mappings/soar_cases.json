@@ -14,8 +14,10 @@
       "case_status": { "type": "keyword" },
       "resolution_reason": { "type": "text" },
       "assignee": { "type": "keyword" },
+
       "created_at": { "type": "date" },
       "updated_at": { "type": "date" },
+
       "phishing_verdict": { "type": "keyword" },
       "phishing_score": { "type": "float" },
       "allowlisted": { "type": "boolean" }

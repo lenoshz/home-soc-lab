@@ -83,7 +83,7 @@ def main():
     )
 
     for event in events:
-        client.index_document("logs-simulation.lateral_movement", event)
+        client.index_document("soc-events-000001", event)
 
     print(f"[✓] Indexed {len(events)} lateral movement simulation events")
 

@@ -86,7 +86,7 @@ def main():
     )
 
     for event in events:
-        client.index_document("logs-simulation.brute_force", event)
+        client.index_document("soc-events-000001", event)
 
     print(f"[✓] Indexed {len(events)} brute force simulation events to logs-simulation.brute_force")
 
