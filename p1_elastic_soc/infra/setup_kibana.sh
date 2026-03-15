@@ -14,6 +14,14 @@ if [ -f "${ENV_FILE}" ]; then
 fi
 
 ELASTIC_PASSWORD="${ELASTIC_PASSWORD:-changeme}"
+KIBANA_SERVICETOKEN="${KIBANA_SERVICE_TOKEN:-}"
+
+if [ -z "${KIBANA_SERVICE_TOKEN}" ]; then
+    echo "[!] KIBANA_SERVICE_TOKEN is not set. Create one with:"
+    echo "    curl -u elastic:<pass> -X POST \"${ES_HOST}/_security/service/elastic/kibana/credential/token/<name>?pretty\""
+    exit 1
+fi
+
 
 echo "[*] Checking Kibana availability..."
 if curl -sk "http://localhost:${KIBANA_PORT}/api/status" --max-time 5 | grep -q "available"; then
@@ -33,8 +41,10 @@ else
         --link home-soc-elastic:elasticsearch \
         -p "${KIBANA_PORT}:5601" \
         -e "ELASTICSEARCH_HOSTS=${ES_INTERNAL_HOST}" \
-        -e "ELASTICSEARCH_USERNAME=elastic" \
-        -e "ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}" \
+        -e "ELASTICSEARCH_SERVICEACCOUNTTOKEN=${KIBANA_SERVICE_TOKEN}" \
+        -e "XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_SECURITY_ENCRYPTION_KEY}" \
+	-e "XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTEDSAVEDOBJECTS_ENCRYPTION_KEY}" \
+	-e "XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_REPORTING_ENCRYPTION_KEY}" \
         "docker.elastic.co/kibana/kibana:${KIBANA_VERSION}"
 
     echo "[*] Waiting for Kibana to be ready (up to 180s)..."

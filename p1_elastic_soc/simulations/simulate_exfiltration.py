@@ -95,7 +95,7 @@ def main():
     )
 
     for event in events:
-        client.index_document("logs-simulation.exfiltration", event)
+        client.index_document("soc-events-000001", event)
 
     print(f"[✓] Indexed {len(events)} exfiltration simulation events")
 
