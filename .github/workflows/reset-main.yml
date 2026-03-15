@@ -1,0 +1,64 @@
+# This workflow resets `main` to commit 2635ebf, removing three accidental commits
+# (55638b8 "Files added", 0aae7cb "Added files", 7465752 "Merge branch 'main'").
+# It runs once when this PR branch is pushed, then self-deletes so it does not
+# linger in the repository.
+name: Reset main to 2635ebf
+
+on:
+  push:
+    branches:
+      - copilot/reset-main-branch-to-2635ebf
+
+permissions:
+  contents: write
+
+jobs:
+  reset-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify target commit exists
+        run: |
+          TARGET="2635ebf08ad48b96a6ccebe9803c5a22c0f203fa"
+          if ! git cat-file -t "$TARGET" > /dev/null 2>&1; then
+            echo "ERROR: Target commit $TARGET not found in repository history."
+            exit 1
+          fi
+          echo "Target commit $TARGET verified."
+
+      - name: Force-reset main to 2635ebf (force-with-lease)
+        run: |
+          TARGET="2635ebf08ad48b96a6ccebe9803c5a22c0f203fa"
+          EXPECTED_CURRENT="7465752196b3931d260e2b9e684c551ded57f866"
+          ACTUAL_CURRENT=$(git ls-remote origin refs/heads/main | awk '{print $1}')
+
+          if [ "$ACTUAL_CURRENT" = "$TARGET" ]; then
+            echo "main is already at the target commit $TARGET. Nothing to do."
+            exit 0
+          fi
+
+          if [ "$ACTUAL_CURRENT" != "$EXPECTED_CURRENT" ]; then
+            echo "WARNING: main has changed since this reset was planned."
+            echo "  Expected: $EXPECTED_CURRENT"
+            echo "  Actual:   $ACTUAL_CURRENT"
+            echo "Aborting – please verify the current state of main before retrying."
+            exit 1
+          fi
+
+          echo "Resetting main from $ACTUAL_CURRENT to $TARGET ..."
+          git push --force-with-lease=refs/heads/main:"$ACTUAL_CURRENT" \
+            origin "$TARGET:refs/heads/main"
+          echo "Done. main now points to $TARGET."
+
+      - name: Remove this workflow file from the PR branch
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git rm .github/workflows/reset-main.yml
+          git commit -m "chore: remove one-shot reset-main workflow after completion"
+          git push origin HEAD:copilot/reset-main-branch-to-2635ebf
